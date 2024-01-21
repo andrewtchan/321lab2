@@ -4,7 +4,7 @@ from Cryptodome.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 
 def ecb_encrypt(key, raw_data):
-    # convert raw data to byte string, pad with bytes
+    # convert raw data (string) to byte string, pad with bytes
     padded_data = pad(raw_data.encode(), AES.block_size)
 
     # create an AES-128 cipher with the given key
@@ -27,6 +27,7 @@ def ecb_decrypt(key, enc_ct):
     return unpad(cipher.decrypt(ciphertext), AES.block_size)
 
 def main():
+    # library test
     data = "secret message"
     aes_key = get_random_bytes(16)
 
@@ -36,6 +37,29 @@ def main():
     print(encrypted.decode())
     print(decrypted.decode())
 
+    # ECB
+    f = open("cp-logo.bmp", "rb")
+    data = f.read()
+    f.close()
+    header = data[:54]
+    content = data[54:]
+    key = get_random_bytes(16)
+    cipher = AES.new(key, AES.MODE_ECB)
+
+    # pad content using PKCS#7
+    padded_content = content + (chr(16 - len(content) % 16) * (16 - len(content) % 16)).encode()
+
+    # prepend header & write to output file
+    out = open("ecb-logo.bmp", "wb")
+    cipher_text = header
+
+    # divide content into 16 byte chunks, encrypt using library AES cipher
+    for i in range(len(padded_content) // 16):
+        plaintext = padded_content[i*16:(i*16)+16]
+        cipher_text += cipher.encrypt(plaintext)
+
+    out.write(cipher_text)
+    out.close()
     
 
 if __name__ == "__main__":
