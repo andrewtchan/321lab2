@@ -41,14 +41,13 @@ def cbc_decrypt(key, enc_ct, IV):
     return unpad(cipher.decrypt(b64decode(enc_ct)), AES.block_size)
 
 def main():
-    # library test
+    # library tests
     data = "secret message"
     aes_key = get_random_bytes(16)
 
     encrypted = ecb_encrypt(aes_key, data)
     decrypted = ecb_decrypt(aes_key, encrypted)
 
-    # CBC encryption-decryption
     encrypted_cbc, IV = cbc_encrypt(aes_key, data)
     decrypted_cbc = cbc_decrypt(aes_key, encrypted_cbc, IV)
 
@@ -77,8 +76,11 @@ def main():
     for i in range(len(padded_content) // 16):
         plaintext = padded_content[i*16:(i*16)+16]
         cipher_text += cipher.encrypt(plaintext)
+    
+    out.write(cipher_text)
+    out.close()
 
-    # CBC - encrypting the image
+    # CBC encryption
     logo = open("cp-logo.bmp", "rb")
     data_cbc = logo.read()
     logo.close()
@@ -94,9 +96,6 @@ def main():
         cipher_text_cbc += cipher_cbc.encrypt(plaintext_cbc)
     out_cbc.write(cipher_text_cbc)
     out_cbc.close()
-
-    out.write(cipher_text)
-    out.close()
     
 
 if __name__ == "__main__":
