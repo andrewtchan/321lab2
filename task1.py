@@ -87,7 +87,7 @@ def main():
     header_cbc = data_cbc[:54]
     content_cbc = data_cbc[54:]
     key_cbc = get_random_bytes(16)
-    cipher_cbc = AES.new(key_cbc, AES.MODE_CBC)
+    cipher_cbc = AES.new(key_cbc, AES.MODE_ECB)
     padded_content_cbc = content_cbc + (chr(16 - len(content_cbc) % 16) * (16 - len(content_cbc) % 16)).encode()
     out_cbc = open("cbc-logo.bmp", "wb")
     cipher_text_cbc = header_cbc
