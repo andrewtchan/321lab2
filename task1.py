@@ -17,6 +17,7 @@ def ecb_encrypt(key, raw_data):
     return b64encode(encrypted_data)
 
 def ecb_decrypt(key, enc_ct):
+    
     # decode ascii to ciphertext bytes
     ciphertext = b64decode(enc_ct)
 
@@ -26,12 +27,28 @@ def ecb_decrypt(key, enc_ct):
     # decrypt ciphertext bytes with cipher, remove padding
     return unpad(cipher.decrypt(ciphertext), AES.block_size)
 
-def cbc_encrypt(key, raw_data):
+def cbc_encrypt(key, raw_data, IV):
+    data = pad(raw_data.enocde(), AES.block_size())
+    
     # creates cipher
-    cipher = AES.new(key, AES.MODE_CBC)
+    cipher = AES.new(key, AES.MODE_ECB)
+    data = bytearray(data)
+    total_encrypted = ''
+
+    i = 0
+    while i < len(data):
+        if (i == 0):
+            total_encrypted = cipher.encrypt(data[:4] ^ IV)
+            encryption = total_encrypted
+        else :
+            encryption = cipher.encrypt(data[i:i+4] ^ encryption)
+            total_encrypted += encryption
+        i += 4
 
     # Encrypts data and returns cipher text
-    return b64encode(cipher.encrypt(pad(raw_data.encode(), AES.block_size))), cipher.iv
+    return b64encode(total_encrypted)
+
+
 
 def cbc_decrypt(key, enc_ct, IV):
     # re-creates cipher
@@ -44,11 +61,12 @@ def main():
     # library tests
     data = "secret message"
     aes_key = get_random_bytes(16)
+    IV = get_random_bytes(16)
 
     encrypted = ecb_encrypt(aes_key, data)
     decrypted = ecb_decrypt(aes_key, encrypted)
 
-    encrypted_cbc, IV = cbc_encrypt(aes_key, data)
+    encrypted_cbc = cbc_encrypt(aes_key, data, IV)
     decrypted_cbc = cbc_decrypt(aes_key, encrypted_cbc, IV)
 
     print(encrypted.decode())
