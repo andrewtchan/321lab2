@@ -12,14 +12,30 @@ def submit(key: bytes, iv: bytes, user_string: str):
     padded_content = plaintext + (chr(16 - len(plaintext) % 16) * (16 - len(plaintext) % 16)).encode()
 
     # encrypt padded_content with CBC
-    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    return cipher.encrypt(padded_content)
+    cipher = AES.new(key, AES.MODE_ECB)
+    cipher_text_cbc = bytes()
+    prev = iv
+    for i in range(len(padded_content) // 16):
+        plaintext_cbc = padded_content[i*16:(i*16)+16]
+        xored = bytes(a ^ b for a, b in zip(plaintext_cbc[0:16], prev))
+        encrypted_cbc = cipher.encrypt(xored)
+        cipher_text_cbc += encrypted_cbc
+        prev = encrypted_cbc
+    return cipher_text_cbc
 
 def verify(key: bytes, iv: bytes, ciphertext: bytes):
     # decrypt ciphertext
-    cipher = AES.new(key, AES.MODE_CBC, iv=iv)
-    plaintext = cipher.decrypt(ciphertext) # no .decode() here because scrambled first block may have non-ascii characters
-    print(plaintext)
+    cipher = AES.new(key, AES.MODE_ECB)
+
+    plaintext = bytes()
+    prev = iv
+    for i in range(len(ciphertext) // 16):
+        decrypted_block = cipher.decrypt(ciphertext[i*16:(i*16)+16])
+        xored = bytes(a ^ b for a, b in zip(decrypted_block, prev))
+        plaintext += xored
+        prev = ciphertext[i*16:(i*16)+16]
+
+    print(plaintext) # no .decode() here because scrambled first block may have non-ascii characters
     if plaintext.find(b';admin=true;') > 0:
         return True
     else:
